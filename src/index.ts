@@ -30,40 +30,38 @@ client.login(process.env.DISCORD_TOKEN);
 console.log('Discord bot initialized');
 
 client.on("messageCreate", async (message) => {
+    console.log({message})
     const channelId = message.channelId;
-    if (channelId !== CHANNEL_ID) {
+    if (channelId !== CHANNEL_ID || message.author.bot) {
         return;
     }
     console.log('Received message');
-    const dumbEmoji = message.guild.emojis.cache.get('1014860400564650044');
     const channel = client.channels.cache.get(CHANNEL_ID);
     const username = message.author.username;
     const messageContent = message.content;
     const messageReference = message.reference;
 
     if (messageReference) {
-        await sendPeepoReferenceMessage(username, messageContent, channel, dumbEmoji, messageReference);
+        await sendPeepoReferenceMessage(username, messageContent, channel, messageReference);
         return;
     }
 
-    await sendPeepoNormalMessage(username, messageContent, channel, dumbEmoji);
+    await sendPeepoNormalMessage(username, messageContent, channel);
 });
 
-async function sendPeepoNormalMessage(username, messageContent, channel, dumbEmoji,) {
-    const canSendMessage = (username === 'Hej' || username === 'Peyvir')
-        && messageContent;
+async function sendPeepoNormalMessage(username, messageContent, channel) {
+    const canSendMessage = messageContent;
     if (canSendMessage) {
         const peepoResponse = await generatePeepoResponse(openAIInstance, { messageContent, username });
         console.log('Generated peepo response');
-        await (channel as TextChannel).send(`${peepoResponse} ${dumbEmoji}`);
+        await (channel as TextChannel).send(`${peepoResponse}`);
         console.log('Peepo message sent');
     }
 }
 
-async function  sendPeepoReferenceMessage(username, messageContent, channel, dumbEmoji, messageReference) {
+async function  sendPeepoReferenceMessage(username, messageContent, channel, messageReference) {
     const referenceMessageContent = (await channel.messages.fetch(messageReference.messageId)).content;
-    const canSendMessage = (username === 'Hej' || username === 'Peyvir')
-        && messageContent
+    const canSendMessage = messageContent
         && referenceMessageContent;
     if (canSendMessage) {
         const peepoResponse = await generatePeepoResponsewWithContext(
@@ -75,7 +73,7 @@ async function  sendPeepoReferenceMessage(username, messageContent, channel, dum
             }
         );
         console.log('Generated peepo context response');
-        await (channel as TextChannel).send(`${peepoResponse} ${dumbEmoji}`);
+        await (channel as TextChannel).send(`${peepoResponse}`);
         console.log('Peepo context message sent');
     }
 }
